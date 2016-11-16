@@ -4,7 +4,7 @@ bin2c - convert file data to C byte array
 
 # SYNOPSIS
 
-bin2c [IN_FILE [OUT_FILE [VAR_NAME]]]
+bin2c [ -h,--help | -v,--version | [IN_FILE [OUT_FILE [VAR_NAME]]]]
 
 # DESCRIPTION
 
