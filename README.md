@@ -39,12 +39,12 @@ ADD_EXECUTABLE(bin2c bin2c.c)
 ADD_CUSTOM_COMMAND(OUTPUT resources.xrs
                    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
                    COMMAND wxrc ${CMAKE_CURRENT_SOURCE_DIR}/xrc/*.xrc -o resources.xrs
-		   DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/xrc/*.xrc)
+                   DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/xrc/*.xrc)
 
 # step two, generate include file
 ADD_CUSTOM_COMMAND(OUTPUT resources.h
                    COMMAND bin2c resources.xrs resources.h resource_data
-		   DEPENDS bin2c resources.xrs)
+                   DEPENDS bin2c resources.xrs)
 ```
 
 # LICENSE
