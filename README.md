@@ -47,6 +47,15 @@ ADD_CUSTOM_COMMAND(OUTPUT resources.h
                    DEPENDS bin2c resources.xrs)
 ```
 
+# ACKNOWLEDGEMENTS
+
+This program grew out of some work I am doing for the
+[VisualBoyAdvance-M](http://github.com/visualboyadvance-m/visualboyadvance-m)
+Game Boy Advance emulator project.
+
+It replaces a bin2c.cmake script written in cmake that was very slow, I don't
+know who the original author was.
+
 # LICENSE
 
 BSD 2-Clause
