@@ -36,7 +36,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <locale.h>
 #include <unistd.h>
 
-const char* version = "0.1";
+const char* version = "0.2";
 
 void format_perror(const char* fmt, va_list args) {
     static char error_str[256];
