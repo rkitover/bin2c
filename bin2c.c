@@ -34,6 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <ctype.h>
 #include <wchar.h>
 #include <locale.h>
+#include <unistd.h>
 
 const char* version = "0.1";
 
@@ -160,10 +161,12 @@ int main(int argc, const char** argv) {
     const char* out_file_name  = argc >= 3 ? argv[2] : NULL;
     const char* var_name       = argc >= 4 ? argv[3] : NULL;
     char* computed_identifier  = NULL;
-    int i = 0, file_pos = 0;
+    int i = 0, file_pos = 0, in_fd = -1;
     size_t bytes_read   = 0;
     unsigned char* buf  = safe_malloc(4096);
     FILE *in_file, *out_file;
+
+    setlocale(LC_ALL, "");
 
     if (argc > 4)
         die_usage("invalid number of arguments");
@@ -181,12 +184,10 @@ int main(int argc, const char** argv) {
         }
     }
 
-    setlocale(LC_ALL, "");
-
     if (!(in_file  = !in_file_name  || !strcmp(in_file_name, "-")  ?  stdin : fopen(in_file_name,  "rb")))
         die("can't open input file '%s'", in_file_name);
 
-    if (!(out_file = !out_file_name || !strcmp(out_file_name, "-") ? stdout : fopen(out_file_name, "wb")))
+    if (!(out_file = !out_file_name || !strcmp(out_file_name, "-") ? stdout : fopen(out_file_name, "w")))
         die("can't open '%s' for writing", out_file_name);
 
     if (in_file_name && !var_name)
@@ -198,9 +199,11 @@ int main(int argc, const char** argv) {
                       var_name     ? var_name     : "resource_data"
     );
 
-    while ((bytes_read = fread(buf, 1, 4096, in_file))) {
+    in_fd = fileno(in_file);
+
+    while ((bytes_read = read(in_fd, buf, 4096))) {
         for (i = 0; i < bytes_read; i++) {
-            char* comma = feof(in_file) && i == bytes_read - 1 ? "" : ",";
+            char* comma = bytes_read < 4096 && i == bytes_read - 1 ? "" : ",";
 
             fprintf(out_file, "0x%02x%s", buf[i], comma);
 
