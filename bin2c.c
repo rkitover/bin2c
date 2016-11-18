@@ -36,13 +36,19 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <locale.h>
 #include <unistd.h>
 
-const char* version = "0.2";
+#define BUF_SIZE  4096
+#define WBUF_SIZE BUF_SIZE * sizeof(wchar_t)
+#define MSG_SIZE  256
+
+const char* version    = "0.3";
+
+const char* msg_prefix = "bin2c: ";
 
 void format_perror(const char* fmt, va_list args) {
-    static char error_str[256];
-    static char fmt_str[256];
-    strcpy(fmt_str, "bin2c: ");
-    strncat(fmt_str, fmt, 248);
+    static char error_str[MSG_SIZE];
+    static char fmt_str[MSG_SIZE];
+    strcpy(fmt_str, msg_prefix);
+    strncat(fmt_str, fmt, MSG_SIZE - sizeof(msg_prefix));
     vsnprintf(error_str, sizeof(error_str), fmt_str, args);
     perror(error_str);
 }
@@ -62,21 +68,22 @@ void* safe_malloc(size_t size) {
     return allocated;
 }
 
-char* file_name_to_identifier(const char* file_name_chars) {
-    wchar_t* file_name       = safe_malloc(4096 * sizeof(wchar_t));
-    wchar_t* identifier      = safe_malloc(4096 * sizeof(wchar_t));
-    char*    identifier_cstr = safe_malloc(4096 * sizeof(wchar_t));
+char* file_name_to_identifier(const char* file_name_cstr) {
+    wchar_t* file_name       = safe_malloc(WBUF_SIZE);
+    wchar_t* identifier      = safe_malloc(WBUF_SIZE);
+    char*    identifier_cstr = safe_malloc(WBUF_SIZE);
     wchar_t* file_name_ptr   = file_name;
     wchar_t* identifier_ptr  = identifier;
     wchar_t* file_name_end   = NULL;
+    size_t   file_name_len   = 0;
     int between_tokens       = 0;
 
-    if (mbstowcs(file_name, file_name_chars, strlen(file_name_chars)) == -1)
-        die("cannot convert '%s' to locale representation", file_name_chars);
+    if ((file_name_len = mbstowcs(file_name, file_name_cstr, BUF_SIZE - 1)) == -1)
+        die("cannot convert '%s' to locale representation", file_name_cstr);
 
     *identifier = 0;
 
-    file_name_end = file_name + wcslen(file_name);
+    file_name_end = file_name + file_name_len + 1;
 
     while (file_name_ptr < file_name_end) {
         if (iswalnum(*file_name_ptr)) {
@@ -98,7 +105,7 @@ char* file_name_to_identifier(const char* file_name_chars) {
 
     *identifier_ptr = 0;
 
-    if (wcstombs(identifier_cstr, identifier, wcslen(identifier)) == -1)
+    if (wcstombs(identifier_cstr, identifier, WBUF_SIZE - 1) == -1)
         die("failed to convert wide character string to bytes");
 
     free(file_name);
@@ -137,11 +144,11 @@ void usage(int err) {
 }
 
 void die_usage(const char* fmt, ...) {
-    static char fmt_str[256];
+    static char fmt_str[MSG_SIZE];
     va_list args;
     va_start(args, fmt);
-    strcpy(fmt_str, "bin2c: ");
-    strncat(fmt_str, fmt, 247);
+    strcpy(fmt_str, msg_prefix);
+    strncat(fmt_str, fmt, MSG_SIZE - sizeof(msg_prefix));
     strcat(fmt_str, "\n");
     vfprintf(stderr, fmt_str, args);
     va_end(args);
@@ -163,7 +170,7 @@ int main(int argc, const char** argv) {
     char* computed_identifier  = NULL;
     int i = 0, file_pos = 0, in_fd = -1;
     size_t bytes_read   = 0;
-    unsigned char* buf  = safe_malloc(4096);
+    unsigned char* buf  = safe_malloc(BUF_SIZE);
     FILE *in_file, *out_file;
 
     setlocale(LC_ALL, "");
@@ -201,9 +208,9 @@ int main(int argc, const char** argv) {
 
     in_fd = fileno(in_file);
 
-    while ((bytes_read = read(in_fd, buf, 4096))) {
+    while ((bytes_read = read(in_fd, buf, BUF_SIZE))) {
         for (i = 0; i < bytes_read; i++) {
-            char* comma = bytes_read < 4096 && i == bytes_read - 1 ? "" : ",";
+            char* comma = bytes_read < BUF_SIZE && i == bytes_read - 1 ? "" : ",";
 
             fprintf(out_file, "0x%02x%s", buf[i], comma);
 
