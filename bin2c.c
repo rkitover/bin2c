@@ -148,7 +148,7 @@ void die_usage(const char* fmt, ...) {
     va_list args;
     va_start(args, fmt);
     strcpy(fmt_str, msg_prefix);
-    strncat(fmt_str, fmt, MSG_SIZE - sizeof(msg_prefix));
+    strncat(fmt_str, fmt, MSG_SIZE - sizeof(msg_prefix) - 1);
     strcat(fmt_str, "\n");
     vfprintf(stderr, fmt_str, args);
     va_end(args);
