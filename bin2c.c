@@ -32,9 +32,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stdio.h>
 #include <stdarg.h>
 #include <ctype.h>
+#include <wctype.h>
 #include <wchar.h>
 #include <locale.h>
+#ifndef _MSC_VER
 #include <unistd.h>
+#endif
 
 #define BUF_SIZE  4096
 #define WBUF_SIZE BUF_SIZE * sizeof(wchar_t)

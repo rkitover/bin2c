@@ -30,21 +30,33 @@ SET(SOURCES program.cpp resources.h)
 
 ADD_EXECUTABLE(program ${SOURCES})
 
-# add the bin2c intermediate executable
-ADD_EXECUTABLE(bin2c bin2c.c)
-# if you use SDL you may need this
-#SET_TARGET_PROPERTIES(bin2c PROPERTIES COMPILE_FLAGS "-Dmain=main")
+# add custom target for bin2c executable compiled with the host compiler
+SET(BIN2C ${CMAKE_BINARY_DIR}/bin2c)
 
-# step one, compile your resources
+IF(CMAKE_HOST_WIN32)
+    SET(BIN2C ${BIN2C}.exe)
+ENDIF()
+
+IF(MSVC)
+    ADD_CUSTOM_COMMAND(OUTPUT ${BIN2C}
+                       COMMAND cl ${CMAKE_CURRENT_SOURCE_DIR}/bin2c.c /link "/out:${BIN2C}"
+                       DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/bin2c.c)
+ELSE(MSVC)
+    ADD_CUSTOM_COMMAND(OUTPUT ${BIN2C}
+                       COMMAND cc ${CMAKE_CURRENT_SOURCE_DIR}/bin2c.c -o ${BIN2C}
+                       DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/bin2c.c)
+ENDIF(MSVC)
+
+# step one, compile your resources (assumes .xrc files are listed in the XRC_SOURCES variable)
 ADD_CUSTOM_COMMAND(OUTPUT resources.xrs
                    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-                   COMMAND wxrc ${CMAKE_CURRENT_SOURCE_DIR}/xrc/*.xrc -o resources.xrs
-                   DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/xrc/*.xrc)
+                   COMMAND wxrc ${XRC_SOURCES} -o resources.xrs
+                   DEPENDS ${XRC_SOURCES})
 
 # step two, generate include file
 ADD_CUSTOM_COMMAND(OUTPUT resources.h
-                   COMMAND bin2c resources.xrs resources.h resource_data
-                   DEPENDS bin2c resources.xrs)
+                   COMMAND ${BIN2C} resources.xrs resources.h resource_data
+                   DEPENDS ${BIN2C} resources.xrs)
 ```
 
 # ACKNOWLEDGEMENTS
